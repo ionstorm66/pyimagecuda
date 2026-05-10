@@ -1,7 +1,7 @@
 import ctypes
 import sys
 
-__version__ = "0.1.4"
+__version__ = "0.1.5"
 
 def _check_nvidia_driver():
     try:
@@ -47,6 +47,7 @@ if _INTERNAL_LOADED:
         from .transform import Transform
         from .text import Text
         from .gl_interop import GLResource
+        from .cuda_interop import to_cupy
         from .pyimagecuda_internal import cuda_sync # type: ignore
     except ImportError as e:
         print(f"Warning: Error importing Python wrappers: {e}")

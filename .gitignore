@@ -8,3 +8,4 @@ site/
 *.lib
 *.exp
 .vscode/
+.claude/

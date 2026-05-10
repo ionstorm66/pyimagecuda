@@ -41,6 +41,7 @@ static PyMethodDef all_methods[] = {
     {"cuda_sync", py_cuda_sync, METH_VARARGS, "Cuda Sync"},
     {"download_from_buffer", py_download_from_buffer, METH_VARARGS, "Download From Buffer"},
     {"free_buffer", py_free_buffer, METH_VARARGS, "Free Buffer"},
+    {"get_buffer_ptr", py_get_buffer_ptr, METH_VARARGS, "Get raw CUDA device pointer as int"},
     {"upload_to_buffer", py_upload_to_buffer, METH_VARARGS, "Upload To Buffer"},
 
     // convert.cu

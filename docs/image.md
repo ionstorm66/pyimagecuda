@@ -154,6 +154,121 @@ print(f"Current: {img.width}×{img.height}")  # 1280×720
 
 ---
 
+## CUDA Interop (Zero-Copy)
+
+PyImageCUDA images implement the [`__cuda_array_interface__`](https://numba.readthedocs.io/en/stable/cuda/cuda_array_interface.html) v3 protocol. This allows any library in the CUDA Python ecosystem (CuPy, PyTorch, Numba, RAPIDS, JAX with the CUDA backend, etc.) to read **and write** the image's GPU memory **without any copies**.
+
+The memory layout exposed is `(height, width, 4)` interleaved RGBA, row-major contiguous:
+
+- `Image` → `float32` (typestr `<f4`)
+- `ImageU8` → `uint8` (typestr `|u1`)
+
+!!! warning "Memory ownership"
+    The CUDA buffer is owned by the `Image` / `ImageU8` instance. The image **must stay alive** while any external array views it, otherwise the view becomes a dangling pointer. Do **not** call `image.free()` while a CuPy / Torch tensor still references it.
+
+---
+
+### Raw device pointer
+
+Use the `cuda_ptr` property to retrieve the raw CUDA device pointer as a Python `int`. Useful for custom kernels or low-level interop.
+```python
+from pyimagecuda import Image
+
+img = Image(1920, 1080)
+print(hex(img.cuda_ptr))  # e.g. 0x7f1234500000
+```
+
+---
+
+### CuPy
+
+The `to_cupy()` helper wraps a pyimagecuda image as a zero-copy `cupy.ndarray`. CuPy is **not** a dependency of pyimagecuda; install it separately:
+```bash
+pip install cupy-cuda12x   # or cupy-cuda11x for CUDA 11
+```
+```python
+from pyimagecuda import Image, Fill, to_cupy, download
+import cupy as cp
+
+img = Image(512, 512)
+Fill.color(img, (1, 0, 0, 1))
+
+# Zero-copy view — shares the same GPU memory
+arr = to_cupy(img)
+assert arr.data.ptr == img.cuda_ptr
+assert arr.shape == (512, 512, 4)
+assert arr.dtype == cp.float32
+
+# Modify via CuPy → changes are visible in the pyimagecuda image
+arr[:, :, 1] = 1.0  # add green channel
+
+# Download to verify
+pixels = download(img)
+```
+
+Because `__cuda_array_interface__` is honored, `cp.asarray(img)` works too:
+```python
+arr = cp.asarray(img)  # zero-copy
+```
+
+---
+
+### Custom CUDA kernels (CuPy RawKernel)
+
+You can run your own CUDA kernels directly on pyimagecuda buffers:
+```python
+from pyimagecuda import Image, Fill
+import cupy as cp
+
+img = Image(512, 512)
+Fill.color(img, (0.2, 0.4, 0.8, 1.0))
+
+invert_rgb = cp.RawKernel(r'''
+extern "C" __global__
+void invert_rgb(float4* data, int n) {
+    int i = blockIdx.x * blockDim.x + threadIdx.x;
+    if (i >= n) return;
+    float4 p = data[i];
+    data[i] = make_float4(1.0f - p.x, 1.0f - p.y, 1.0f - p.z, p.w);
+}
+''', 'invert_rgb')
+
+arr = cp.asarray(img)
+n = img.width * img.height
+invert_rgb((n // 256 + 1,), (256,), (arr, n))
+```
+
+---
+
+### PyTorch
+
+PyTorch consumes `__cuda_array_interface__` via `torch.as_tensor`:
+```python
+import torch
+from pyimagecuda import Image, Fill
+
+img = Image(512, 512)
+Fill.color(img, (1, 0, 0, 1))
+
+tensor = torch.as_tensor(img, device='cuda')  # zero-copy
+# tensor.shape == torch.Size([512, 512, 4])
+# tensor.dtype == torch.float32
+```
+
+---
+
+### Numba CUDA
+
+```python
+from numba import cuda
+from pyimagecuda import Image
+
+img = Image(512, 512)
+device_array = cuda.as_cuda_array(img)  # zero-copy
+```
+
+---
+
 ## Best Practices
 
 ### For Simple Scripts

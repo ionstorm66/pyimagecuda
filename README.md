@@ -1,4 +1,4 @@
-# PyImageCUDA 0.1.4
+# PyImageCUDA 0.1.5
 
 [![PyPI version](https://img.shields.io/pypi/v/pyimagecuda.svg)](https://pypi.org/project/pyimagecuda/)
 [![Build Status](https://github.com/offerrall/pyimagecuda/actions/workflows/build.yml/badge.svg)](https://github.com/offerrall/pyimagecuda/actions)
@@ -39,6 +39,7 @@ with Image(1024, 1024) as bg:
 * ✅ **Studio Quality:** 32-bit floating-point precision (float32) to prevent color banding.
 * ✅ **Advanced Memory Control:** Reuse GPU buffers across operations and resize without reallocation—critical for video processing and batch workflows.
 * ✅ **OpenGL Integration:** Direct GPU-to-GPU display for real-time preview widgets.
+* ✅ **CUDA Interop (Zero-Copy):** Native `__cuda_array_interface__` v3 support. Share GPU buffers with CuPy, PyTorch, Numba and the rest of the CUDA Python ecosystem without copies.
 * ✅ **API Simplicity:** Intuitive, Pythonic API designed for ease of use.
 
 ## Use Cases
@@ -82,6 +83,7 @@ pip install pyimagecuda
 * [Image & Memory](https://offerrall.github.io/pyimagecuda/image/) (Buffer management)
 * [IO](https://offerrall.github.io/pyimagecuda/io/) (Loading and Saving)
 * [OpenGL Integration](https://offerrall.github.io/pyimagecuda/opengl/) (Real-time preview, zero-copy display)
+* [CUDA Interop](https://offerrall.github.io/pyimagecuda/image/#cuda-interop-zero-copy) (Zero-copy with CuPy, PyTorch, Numba)
 
 ### Operations
 * [Fill](https://offerrall.github.io/pyimagecuda/fill/) (Solid colors, Gradients, Checkerboard, Grid, Stripes, Dots, Circle, Ngon, Noise, Perlin)

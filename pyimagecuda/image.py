@@ -1,4 +1,4 @@
-from .pyimagecuda_internal import create_buffer_f32, free_buffer, create_buffer_u8  #type: ignore
+from .pyimagecuda_internal import create_buffer_f32, free_buffer, create_buffer_u8, get_buffer_ptr  # type: ignore
 
 class Buffer:
     
@@ -86,6 +86,21 @@ class ImageBase:
         """Returns the total pixel capacity of the buffer."""
         return self._buffer.capacity_pixels
 
+    @property
+    def cuda_ptr(self) -> int:
+        return get_buffer_ptr(self._buffer._handle)
+
+    @property
+    def __cuda_array_interface__(self) -> dict:
+        return {
+            'shape': (self._height, self._width, 4),
+            'typestr': self._cai_typestr,
+            'data': (self.cuda_ptr, False),
+            'version': 3,
+            'strides': None,
+            'stream': 1,
+        }
+
     def free(self) -> None:
         self._buffer.free()
 
@@ -100,18 +115,22 @@ class ImageBase:
         return f"{self.__class__.__name__}({self.width}×{self.height})"
 
 class Image(ImageBase):
-    
+
+    _cai_typestr = '<f4'
+
     def __init__(self, width: int, height: int):
         """
         Creates a floating-point image with the given width and height.
-        
+
         Docs & Examples: https://offerrall.github.io/pyimagecuda/image/#image-float32-precision
         """
         super().__init__(width, height, is_u8=False)
 
 
 class ImageU8(ImageBase):
-    
+
+    _cai_typestr = '|u1'
+
     def __init__(self, width: int, height: int):
         """
         Creates an 8-bit unsigned integer image with the given width and height.

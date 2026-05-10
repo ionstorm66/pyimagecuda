@@ -44,6 +44,7 @@ PyObject* py_create_buffer_u8(PyObject* self, PyObject* args);
 PyObject* py_cuda_sync(PyObject* self, PyObject* args);
 PyObject* py_download_from_buffer(PyObject* self, PyObject* args);
 PyObject* py_free_buffer(PyObject* self, PyObject* args);
+PyObject* py_get_buffer_ptr(PyObject* self, PyObject* args);
 PyObject* py_upload_to_buffer(PyObject* self, PyObject* args);
 
 // convert.cu

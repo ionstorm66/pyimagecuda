@@ -338,14 +338,43 @@ PyObject* py_copy_buffer(PyObject* self, PyObject* args) {
 
 PyObject* py_cuda_sync(PyObject* self, PyObject* args) {
     cudaError_t err = cudaDeviceSynchronize();
-    
+
     if (err != cudaSuccess) {
-        PyErr_Format(PyExc_RuntimeError, "CUDA synchronize failed: %s", 
+        PyErr_Format(PyExc_RuntimeError, "CUDA synchronize failed: %s",
                     cudaGetErrorString(err));
         return NULL;
     }
-    
+
     Py_RETURN_NONE;
+}
+
+PyObject* py_get_buffer_ptr(PyObject* self, PyObject* args) {
+    PyObject* capsule;
+
+    if (!PyArg_ParseTuple(args, "O", &capsule)) {
+        return NULL;
+    }
+
+    if (!PyCapsule_CheckExact(capsule)) {
+        PyErr_SetString(PyExc_TypeError, "Expected a Buffer capsule");
+        return NULL;
+    }
+
+    const char* name = PyCapsule_GetName(capsule);
+    if (name == NULL ||
+        (strcmp(name, BUFFER_TYPE_FLOAT32) != 0 &&
+         strcmp(name, BUFFER_TYPE_UINT8) != 0)) {
+        PyErr_SetString(PyExc_TypeError, "Expected a Buffer capsule");
+        return NULL;
+    }
+
+    BufferContext* ctx = (BufferContext*)PyCapsule_GetPointer(capsule, name);
+    if (ctx == NULL || ctx->freed || ctx->ptr == NULL) {
+        PyErr_SetString(PyExc_ValueError, "Buffer has been freed");
+        return NULL;
+    }
+
+    return PyLong_FromVoidPtr(ctx->ptr);
 }
 
 }
